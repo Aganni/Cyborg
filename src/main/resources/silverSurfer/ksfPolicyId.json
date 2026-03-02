@@ -1,0 +1,19 @@
+{
+  "qa2": {
+    "ksfPolicyId": ""
+  },
+  "uat": {
+    "ksfPolicyIdGSMLAP": "",
+    "ksfPolicyIdGPALAP": "",
+    "ksfPolicyIdIPNBR": "8ff1806b-a470-4c2b-8034-81bec273b046",
+    "ksfPolicyIdGSGNRO": "f525b151-e75d-4152-a516-6c81a2f36017",
+    "ksfPolicyIdBNPLGRO": "f9d3f1b9-ca94-4c1e-9f4f-8cd847745564"
+  },
+  "int": {
+    "ksfPolicyIdGSMLAP": "380e543a-6bbf-4a11-9b5a-1588ab33a3b2",
+    "ksfPolicyIdGPALAP":"",
+    "ksfPolicyIdIPNBR": "19c95c78-4a40-4044-856c-e8fac8b1ba97",
+    "ksfPolicyIdGSGNRO": "5b77ca28-dd6a-4ed0-b5fd-c1e4c238dfab",
+    "ksfPolicyIdBNPLGRO": "690a48f0-c635-4998-925d-a4c7eec3758e"
+  }
+}

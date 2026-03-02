@@ -1,0 +1,29 @@
+{
+  "lpc": "AIR",
+  "loanType": "personal",
+  "customerId": "1234567890",
+  "loanAmount": 50000,
+  "bureau": {
+    "vendor": "ConsumerCrif",
+    "pullType": "HardPull"
+  },
+  "kyc": {
+    "type": "panCard",
+    "value": "QAUPB4912E",
+    "surname": "KUMAR",
+    "middleName1": "",
+    "firstName": "MUKESH",
+    "gender": "M",
+    "dob": "1990-02-04T00:00:00",
+    "phone": "6634853375"
+  },
+  "address": {
+    "type": "CORRESPOND",
+    "flatNoPlotNoHouseNo": "GROUND FLOOR SIDHARTH NAGAR PARAM SMIRTI APPT PATNA 800014",
+    "bldNoSocietyName": "",
+    "roadNoNameAreaLocality": "",
+    "state": "BH",
+    "city": "PATNA",
+    "pincode": "801503"
+  }
+}

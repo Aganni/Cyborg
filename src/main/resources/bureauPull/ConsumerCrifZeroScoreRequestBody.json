@@ -1,0 +1,28 @@
+{
+  "lpc": "LAP",
+  "loanType": "secured",
+  "customerId": "IXcP03KaSPKETIi1AJvJZg",
+  "loanAmount": 50000,
+  "bureau": {
+    "vendor": "ConsumerCrif",
+    "pullType": "HardPull"
+  },
+  "kyc": {
+    "type": "panCard",
+    "value": "OSMPD1968I",
+    "surname": "K",
+    "gender": "M",
+    "firstName": "SHIVDASANI",
+    "dob": "1998-10-19T00:00:00",
+    "phone": "663483375"
+  },
+  "address": {
+    "type": "OTHER",
+    "flatNoPlotNoHouseNo": "B-46 3RD Floor, South Delhi, Brijwasi Colony, Mehrauli, Sultan Pur ,Delhi,DL,110030",
+    "bldNoSocietyName": "Kudachi",
+    "roadNoNameAreaLocality": "Shidalbhavi",
+    "state": "LD",
+    "city": "Delhi",
+    "pincode": "110030"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "lpc": "AIR",
+  "loanAmount": 50000,
+  "loanType": "personal",
+  "customerId": "12345676",
+  "bureau": {
+    "vendor": "ConsumerExperian",
+    "pullType": "HardPull"
+  },
+  "kyc": {
+    "type": "panCard",
+    "value": "DACPG6078K",
+    "surname": "Jeh",
+    "firstName": "Shanaya",
+    "gender": "F",
+    "dob": "1987-08-11T15:04:05+08:00",
+    "phone": "9295390874"
+  },
+  "address": {
+    "type": "PER",
+    "flatNoPlotNoHouseNo": "Chinar4 CHS",
+    "bldNoSocietyName": "Chinar4 CHS",
+    "roadNoNameAreaLocality": "SV Raod 4",
+    "state": "MH",
+    "city": "MUMBAI",
+    "pincode": "400003"
+  }
+}

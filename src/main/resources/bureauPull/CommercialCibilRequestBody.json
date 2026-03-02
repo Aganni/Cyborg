@@ -1,0 +1,41 @@
+{
+  "lpc": "LAP",
+  "loanAmount": 50000,
+  "loanType": "business",
+  "customerId": "kf8geifrRzyffoBER6JfYw45",
+  "bureau": {
+    "vendor": "CommercialCibil",
+    "pullType": "HardPull"
+  },
+  "kyc": {
+    "type": "panCard",
+    "value": "AADCR6096D",
+    "businessType": "7",
+    "businessName": "RADHEE FOODS PRIVATE LIMI"
+  },
+  "address": {
+    "type": "OFFICE",
+    "flatNoPlotNoHouseNo": "95 HARIDWAR NAGAR SOC NAVAGAM DINDOLI U",
+    "state": "GJ",
+    "city": "SURAT",
+    "pincode": "394210"
+  },
+  "otherDetails": {
+    "additionalAddresses": [
+      {
+        "city": "GRAN",
+        "flatNoPlotNoHouseNo": "EWS FLAT NO. GF 08, GOLF COURSE ROAD La Lagune Apartment, Gurugram, Gurugram",
+        "pincode": "122011",
+        "state": "HR",
+        "type": "REGADD"
+      },
+      {
+        "city": "GRAN",
+        "flatNoPlotNoHouseNo": "EWS FLAT NO. GF 08, GOLF COURSE ROAD La Lagune Apartment, Gurugram, Gurugram",
+        "pincode": "122011",
+        "state": "HR",
+        "type": "CORP"
+      }
+    ]
+  }
+}

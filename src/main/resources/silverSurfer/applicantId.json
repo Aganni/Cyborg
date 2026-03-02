@@ -1,0 +1,16 @@
+{
+  "qa2": {
+  },
+
+  "uat": {
+    "applicantIdBNPL": 180820,
+    "applicantIdIP": 172231,
+    "applicantIdGSG": 171923
+  },
+
+  "int": {
+    "applicantIdBNPL": 165575,
+    "applicantIdIP": 148945,
+    "applicantIdGSG": 162518
+  }
+}

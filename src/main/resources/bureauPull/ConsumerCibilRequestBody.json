@@ -1,0 +1,27 @@
+{
+  "lpc": "CRC",
+  "loanAmount": 100,
+  "customerId": "123456789",
+  "loanType": "personal",
+  "bureau": {
+    "vendor": "ConsumerCibil",
+    "pullType": "HardPull"
+  },
+  "kyc": {
+    "type": "panCard",
+    "value": "AWGPR1977H",
+    "surname": "PADMA RAM",
+    "firstName": "RAMA RAM",
+    "gender": "M",
+    "dob": "1979-04-01T00:00:00",
+    "phone": "9783002404",
+    "email":"info@vimcoplast.com"
+  },
+  "address": {
+    "type": "PER",
+    "flatNoPlotNoHouseNo": "R/O CHADAVATAKATAVAD TH. RAMSAR DSITT-",
+    "state": "RJ",
+    "city": "DLH",
+    "pincode": "344001"
+  }
+}

@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="BureauEngine-Cibil" verbose="2">
+    <test name="ConsumerCibil-LoanType">
+        <parameter name="cucumber.filter.name" value="Verify Bureau Pull with different Loan Types for Consumer Cibil"/>
+        <classes>
+            <class name="testRunner.BureauEngineRunner"/>
+        </classes>
+    </test>
+</suite>
