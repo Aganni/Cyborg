@@ -106,3 +106,25 @@ Feature: BureauEngine Scenarios
       | "ConsumerExperian"  |"SoftPull"| "ESC" |"false"|
       | "ConsumerCibil"     |"HardPull"| "KBL" |"true" |
       | "ConsumerCibil"     | "NoPull" | "KBL" |"true" |
+
+  @Regression
+  Scenario Outline: Verify External Bureau API for both (parse=false) and (parse=true) scenarios at Withdrawal level
+    Given KSF generate unique stateless identifiers for the request
+    And KSF set withdrawalId as "cyborg2026WithdrawalId" for re-pull
+    And KSF generate <lpc> payload for external api with <pullType> for <vendor> and parse <parse>
+    When KSF hit the external BureauEngine Api expecting 200
+    Then KSF validate external response score for vendor <vendor>
+    And KSF hit the BureauEngine Api again with same identifiers expecting 412
+    Then Validate BureauEngine error response "Failure" and message constant "BUREAU_RECORDS_EXISTS_FOR_EXTENAL_API" for "External" Api
+    Examples:
+      | vendor              | pullType | lpc   | parse |
+      | "ConsumerEquifax"   |"HardPull"| "ESC" |"false"|
+#      | "CommercialCibil"   |"HardPull"| "KBL" |"false"|
+#      | "ConsumerCibil"     |"HardPull"| "BPT" |"false"|
+#      | "ConsumerCibil"     |"SoftPull"| "KBL" |"false"|
+#      | "ConsumerCrif"      |"HardPull"| "ESC" |"false"|
+#      | "ConsumerCrif"      |"SoftPull"| "ESC" |"false"|
+#      | "ConsumerExperian"  |"HardPull"| "ESC" |"false"|
+#      | "ConsumerExperian"  |"SoftPull"| "ESC" |"false"|
+#      | "ConsumerCibil"     |"HardPull"| "KBL" |"true" |
+      | "ConsumerCibil"     | "NoPull" | "KBL" |"true" |

@@ -268,6 +268,11 @@ public class BureauEngineOrchestrator extends BaseClass {
             }
         }
 
+        // Inject WithdrawalId for the bureauPull at withdrawal level
+        Object withdrawalId = getValue(Constants.WITHDRAWAL_ID);
+        if (withdrawalId != null) {
+            requestBody = injectWithdrawalId(requestBody, withdrawalId.toString());
+        }
         // Store the external payload in session (separate from normal
         // bureauPullPayload)
         session().setBureauExternalUploadPayload(requestBody);
