@@ -119,12 +119,12 @@ Feature: BureauEngine Scenarios
     Examples:
       | vendor              | pullType | lpc   | parse |
       | "ConsumerEquifax"   |"HardPull"| "ESC" |"false"|
-#      | "CommercialCibil"   |"HardPull"| "KBL" |"false"|
-#      | "ConsumerCibil"     |"HardPull"| "BPT" |"false"|
-#      | "ConsumerCibil"     |"SoftPull"| "KBL" |"false"|
-#      | "ConsumerCrif"      |"HardPull"| "ESC" |"false"|
-#      | "ConsumerCrif"      |"SoftPull"| "ESC" |"false"|
-#      | "ConsumerExperian"  |"HardPull"| "ESC" |"false"|
-#      | "ConsumerExperian"  |"SoftPull"| "ESC" |"false"|
-#      | "ConsumerCibil"     |"HardPull"| "KBL" |"true" |
+      | "CommercialCibil"   |"HardPull"| "KBL" |"false"|
+      | "ConsumerCibil"     |"HardPull"| "BPT" |"false"|
+      | "ConsumerCibil"     |"SoftPull"| "KBL" |"false"|
+      | "ConsumerCrif"      |"HardPull"| "ESC" |"false"|
+      | "ConsumerCrif"      |"SoftPull"| "ESC" |"false"|
+      | "ConsumerExperian"  |"HardPull"| "ESC" |"false"|
+      | "ConsumerExperian"  |"SoftPull"| "ESC" |"false"|
+      | "ConsumerCibil"     |"HardPull"| "KBL" |"true" |
       | "ConsumerCibil"     | "NoPull" | "KBL" |"true" |
