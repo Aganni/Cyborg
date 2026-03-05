@@ -19,7 +19,17 @@ public class TestSessionData {
     private Integer externalScoreSent;
     private boolean externalParse;
 
+    private java.util.List<String> removedFields = new java.util.ArrayList<>();
+
     // Explicit getters/setters (Lombok @Data may not generate all in this project)
+    public java.util.List<String> getRemovedFields() {
+        return removedFields;
+    }
+
+    public void setRemovedFields(java.util.List<String> v) {
+        this.removedFields = v;
+    }
+
     public LinkedHashMap<String, Object> getData() {
         return data;
     }
