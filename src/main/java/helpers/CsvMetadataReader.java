@@ -4,18 +4,25 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.CsvBindByName;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.Reader;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CsvMetadataReader {
+
+    private static final Logger log = LoggerFactory.getLogger(CsvMetadataReader.class);
 
     @Data
     public static class FieldMetadata {
         @CsvBindByName(column = "Field")
         private String field;
+
+        @CsvBindByName(column = "Description")
+        private String description;
 
         @CsvBindByName(column = "Mandatory")
         private String mandatory;
@@ -30,41 +37,18 @@ public class CsvMetadataReader {
             return field;
         }
 
-        public void setField(String field) {
-            this.field = field;
-        }
-
-        public String getMandatory() {
-            return mandatory;
-        }
-
-        public void setMandatory(String mandatory) {
-            this.mandatory = mandatory;
-        }
-
         public String getExpectedType() {
             return expectedType;
         }
 
-        public void setExpectedType(String expectedType) {
-            this.expectedType = expectedType;
-        }
-
-        public String getTestScenario() {
-            return testScenario;
-        }
-
-        public void setTestScenario(String testScenario) {
-            this.testScenario = testScenario;
-        }
 
         public boolean isMandatory() {
-            return "Y".equalsIgnoreCase(mandatory);
+            return "Y".equalsIgnoreCase(mandatory) || "true".equalsIgnoreCase(mandatory);
         }
     }
 
     public static List<FieldMetadata> readMetadata(String fileName) {
-        String filePath = "src/test/resources/metadata/" + fileName;
+        String filePath = Paths.get("src", "main", "resources", "bureauPull", fileName).toString();
         if (!fileName.endsWith(".csv")) {
             filePath += ".csv";
         }
@@ -77,14 +61,8 @@ public class CsvMetadataReader {
 
             return csvToBean.parse();
         } catch (Exception e) {
+            log.error("Failed to read metadata CSV: {}", filePath, e);
             throw new RuntimeException("Failed to read metadata CSV: " + filePath, e);
         }
-    }
-
-    public static List<String> getMandatoryFields(String fileName) {
-        return readMetadata(fileName).stream()
-                .filter(FieldMetadata::isMandatory)
-                .map(FieldMetadata::getField)
-                .collect(Collectors.toList());
     }
 }
