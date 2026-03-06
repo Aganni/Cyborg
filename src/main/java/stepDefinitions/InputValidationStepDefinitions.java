@@ -41,6 +41,9 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
+        if (session().getBureauExternalUploadPayload() != null) {
+            session().setBureauExternalUploadPayload(currentPayload);
+        }
     }
 
     @When("KSF update all mandatory fields to null in payload based on {string}")
@@ -57,6 +60,9 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
+        if (session().getBureauExternalUploadPayload() != null) {
+            session().setBureauExternalUploadPayload(currentPayload);
+        }
     }
 
     @When("KSF update mandatory integer fields with string in payload based on {string}")
@@ -75,6 +81,9 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
+        if (session().getBureauExternalUploadPayload() != null) {
+            session().setBureauExternalUploadPayload(currentPayload);
+        }
     }
 
     @When("KSF remove all non-mandatory fields from payload based on {string}")
@@ -89,6 +98,9 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
+        if (session().getBureauExternalUploadPayload() != null) {
+            session().setBureauExternalUploadPayload(currentPayload);
+        }
     }
 
     @Then("Validate BureauEngine response is 200 and check no null values")
@@ -101,7 +113,7 @@ public class InputValidationStepDefinitions extends BaseClass {
     @Then("Validate all modified fields are present in the error response")
     public void validateModifiedFieldsInErrorResponse() {
         JsonPath response = session().getCurrentResponse();
-        new CustomResponseValidator().validateFailureDetails("Failure",response, session().getCurrentPayload());
+        new CustomResponseValidator().validateFailureDetails("Failure", response, session().getCurrentPayload());
     }
 
     @Then("Validate BureauEngine error response status {string} and message {string}")
@@ -115,6 +127,11 @@ public class InputValidationStepDefinitions extends BaseClass {
         BureauEngineOrchestrator.sendRequest("GenericBureauPull", statusCode);
     }
 
+    @And("KSF hit the External BureauEngine Api with refactored payload expecting {int}")
+    public void ksfHitExternalApi(int statusCode) throws Exception {
+        BureauEngineOrchestrator.sendExternalRequest(statusCode);
+    }
+
     @When("KSF update mandatory string fields with integer in payload based on {string}")
     public void ksfUpdateMandatoryStringFieldsWithIntegerInPayloadBasedOn(String csvFile) {
         String currentPayload = session().getCurrentPayload();
@@ -124,12 +141,15 @@ public class InputValidationStepDefinitions extends BaseClass {
         for (CsvMetadataReader.FieldMetadata field : metadata) {
             if (field.isMandatory() && "String".equalsIgnoreCase(field.getExpectedType())) {
                 session().getRemovedFields().add(field.getField());
-                log.info("Updating mandatory integer field {} to 'INVALID_STRING' (intentional type mismatch)",
+                log.info("Updating mandatory String field {} to integer 234 (intentional type mismatch)",
                         field.getField());
                 currentPayload = ReadDataFromJson.updateJsonWithPath(currentPayload, field.getField(),
                         234);
             }
         }
         session().setCurrentPayload(currentPayload);
+        if (session().getBureauExternalUploadPayload() != null) {
+            session().setBureauExternalUploadPayload(currentPayload);
+        }
     }
 }

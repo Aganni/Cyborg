@@ -29,4 +29,5 @@ public class TestSessionData {
     private boolean externalParse;
 
     private List<String> removedFields = new ArrayList<>();
+
 }
