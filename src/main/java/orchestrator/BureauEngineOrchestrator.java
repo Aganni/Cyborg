@@ -38,10 +38,6 @@ public class BureauEngineOrchestrator extends BaseClass {
         try {
             String requestBody = parseJsonToString(payloadPath);
 
-            // Inject generated identifiers FIRST
-            requestBody = updateJsonWithPath(requestBody, "appFormId", getValue(Constants.APP_FORM_ID));
-            requestBody = updateJsonWithPath(requestBody, "applicantId", getValue(Constants.APPLICANT_ID));
-
             if (bureauVendor.equalsIgnoreCase(CONSUMER_EXPERIAN)) {
                 requestBody = updateJsonWithPath(requestBody, JsonKeys.REQ_BUREAU_PULL_TYPE, pullType);
             }
@@ -50,9 +46,8 @@ public class BureauEngineOrchestrator extends BaseClass {
             if (withdrawalId != null) {
                 requestBody = injectWithdrawalId(requestBody, withdrawalId.toString());
             }
-
-            session().setCurrentPayload(requestBody);
             session().setBureauPullPayload(requestBody);
+            session().setCurrentPayload(requestBody);
         } catch (Exception e) {
             throw new RuntimeException("Failed to build payload for: " + bureauVendor, e);
         }
@@ -77,7 +72,7 @@ public class BureauEngineOrchestrator extends BaseClass {
         session().setLastStatusCode(statusCode);
     }
 
-    public static void validateBureauEngineResponse(String expectedStatus, String bureauVendor) {
+    public static void validateBureauEngineResponse(String expectedStatus) {
         JsonPath response = session().getBureauEngineResponse();
 
         // Initial Status Check
@@ -90,7 +85,7 @@ public class BureauEngineOrchestrator extends BaseClass {
 
         CustomResponseValidator customValidator = new CustomResponseValidator();
         if (expectedStatus.equalsIgnoreCase("Success")) {
-            customValidator.validateBureauSyncWithRequest(response, session().getCurrentPayload());
+            customValidator.validateBureauResponseSyncWithRequest(response, session().getCurrentPayload());
             ResponseValidator.assertNoNullValues(response);
         } else {
             customValidator.validateFailureDetails(response, session().getCurrentPayload());

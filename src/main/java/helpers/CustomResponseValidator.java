@@ -18,7 +18,7 @@ public class CustomResponseValidator extends BaseClass {
 
     private static final Logger log = LogManager.getLogger(CustomResponseValidator.class);
 
-    public void validateBureauSyncWithRequest(JsonPath response, String requestBody) {
+    public void validateBureauResponseSyncWithRequest(JsonPath response, String requestBody) {
         JsonPath requestJson = new JsonPath(requestBody);
         log.info("KSF: Starting Cross-Layer Sync Validation (URL Params + Body)...");
 

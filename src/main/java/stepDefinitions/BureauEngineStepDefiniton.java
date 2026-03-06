@@ -37,7 +37,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @Then("Validate BureauEngine response having status {string} for {string}")
     public void validateBureauEngineResponse(String Status, String bureauVendor) {
-        bureauOrchestrator.validateBureauEngineResponse(Status, bureauVendor);
+        bureauOrchestrator.validateBureauEngineResponse(Status);
     }
 
     @And("KSF set withdrawalId as {string} for re-pull")
