@@ -6,6 +6,9 @@ import constants.Constants;
 import helpers.CustomResponseValidator;
 import helpers.DynamicDataClass;
 
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.Scenario;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -17,6 +20,23 @@ import static helpers.DynamicDataClass.setValue;
 import static helpers.ReadDataFromJson.updateJsonWithPath;
 
 public class BureauEngineStepDefiniton extends BaseClass {
+
+    @Before(order = 0)
+    public void setupScenario(Scenario scenario) {
+        dynamicData.DynamicDataClass.resetConstants();
+        log.info("-------------------------------------------------------");
+        log.info("Scenario Started: {}", scenario.getName());
+        log.info("Thread ID: {}", Thread.currentThread().getId());
+        log.info("-------------------------------------------------------");
+    }
+
+    @After(order = 0)
+    public synchronized void testData(Scenario scenario) {
+        scenario.log("AppForm ID : " + getValue(Constants.APP_FORM_ID));
+        log.info("-------------------------------------------------------");
+        scenario.log("ApplicantId ID : " + getValue(Constants.APPLICANT_ID));
+        dynamicData.DynamicDataClass.resetConstants();
+    }
 
     // Use an instance of the orchestrator instead of calling static methods
     private final BureauEngineOrchestrator bureauOrchestrator = new BureauEngineOrchestrator();
@@ -53,7 +73,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
             throw new RuntimeException("No active payload found. Ensure a scenario step has initialized the request.");
         }
         String updatedPayload = updateJsonWithPath(currentPayload, path, value);
-        bureauOrchestrator.setCurrentPayload(updatedPayload);
+        session().setCurrentPayload(updatedPayload);
         log.info("Updated payload path '{}' with value '{}'", path, value);
     }
 
@@ -93,7 +113,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
             uniqueKycValue = kycValue + randomNum;
         }
         currentPayload = updateJsonWithPath(currentPayload, "kyc.value", uniqueKycValue);
-        bureauOrchestrator.setCurrentPayload(currentPayload);
+        session().setCurrentPayload(currentPayload);
         bureauOrchestrator.sendRequest(vendor, statusCode);
     }
 

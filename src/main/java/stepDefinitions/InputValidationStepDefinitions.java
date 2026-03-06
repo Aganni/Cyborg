@@ -5,6 +5,7 @@ import helpers.CsvMetadataReader;
 import helpers.CustomResponseValidator;
 import helpers.ReadDataFromJson;
 import helpers.ResponseValidator;
+import io.cucumber.java.PendingException;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -40,7 +41,6 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
-        BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF update all mandatory fields to null in payload based on {string}")
@@ -57,7 +57,6 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
-        BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF update mandatory integer fields with string in payload based on {string}")
@@ -76,7 +75,6 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
-        BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF remove all non-mandatory fields from payload based on {string}")
@@ -91,7 +89,6 @@ public class InputValidationStepDefinitions extends BaseClass {
             }
         }
         session().setCurrentPayload(currentPayload);
-        BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @Then("Validate BureauEngine response is 200 and check no null values")
@@ -116,5 +113,23 @@ public class InputValidationStepDefinitions extends BaseClass {
     @And("KSF hit the BureauEngine Api with refactored payload expecting {int}")
     public void ksfHitApi(int statusCode) throws Exception {
         BureauEngineOrchestrator.sendRequest("GenericBureauPull", statusCode);
+    }
+
+    @When("KSF update mandatory string fields with integer in payload based on {string}")
+    public void ksfUpdateMandatoryStringFieldsWithIntegerInPayloadBasedOn(String csvFile) {
+        String currentPayload = session().getCurrentPayload();
+        List<CsvMetadataReader.FieldMetadata> metadata = CsvMetadataReader.readMetadata(csvFile);
+        session().getRemovedFields().clear();
+
+        for (CsvMetadataReader.FieldMetadata field : metadata) {
+            if (field.isMandatory() && "String".equalsIgnoreCase(field.getExpectedType())) {
+                session().getRemovedFields().add(field.getField());
+                log.info("Updating mandatory integer field {} to 'INVALID_STRING' (intentional type mismatch)",
+                        field.getField());
+                currentPayload = ReadDataFromJson.updateJsonWithPath(currentPayload, field.getField(),
+                        234);
+            }
+        }
+        session().setCurrentPayload(currentPayload);
     }
 }

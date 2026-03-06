@@ -101,10 +101,6 @@ public class BureauEngineOrchestrator extends BaseClass {
         return session().getCurrentPayload();
     }
 
-    public static void setCurrentPayload(String payload) {
-        session().setCurrentPayload(payload);
-    }
-
     public static void sendRequestWithSameIdentifiers(int expectedStatusCode) throws Exception {
         log.info("Sending DUPLICATE request to BureauEngine...");
 
