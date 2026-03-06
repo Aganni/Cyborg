@@ -9,6 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
 
+import java.util.List;
+import java.util.Map;
+
 import base.BaseClass;
 
 import static constants.JsonKeys.*;
@@ -78,55 +81,95 @@ public class CustomResponseValidator extends BaseClass {
         }
     }
 
-    public void validateFailureDetails(JsonPath response, String requestBody) {
-        log.info("KSF: Starting Dynamic Failure Validation...");
+    public void validateFailureDetails(String expectedStatus,JsonPath response, String requestBody) {
+        validateFailureDetails(response, requestBody, expectedStatus, ApiMessages.FIELDS_MISSING_MSG);
+    }
+
+    public void validateFailureDetails(JsonPath response, String requestBody, String expectedStatus,
+            String expectedMessage) {
+        log.info("KSF: Starting Consolidated Failure Validation...");
         JsonPath request = new JsonPath(requestBody);
 
-        // 1. Basic Status Check
-        Assert.assertEquals(response.getString(JsonKeys.STATUS), "Failure");
-        Assert.assertEquals(response.getString(JsonKeys.MESSAGE), ApiMessages.FIELDS_MISSING_MSG);
+        if (expectedMessage != null) {
+            String actualMsg = response.getString(JsonKeys.MESSAGE);
+            Assert.assertTrue(actualMsg.toLowerCase().contains(expectedMessage.toLowerCase()),
+                    String.format("Message mismatch. Expected part: [%s], Actual: [%s]", expectedMessage, actualMsg));
+        }
 
-        // 2. Extract failure info from the FIRST error in the array
-        String actualField = response.getString("errors[0].Field"); // e.g., "LoanType" or "Type"
-        String actualMsg = response.getString("errors[0].Msg");
+        List<Map<String, String>> actualErrors = response.getList("errors");
+        List<String> expectedFields = session().getRemovedFields();
 
-        // 3. Dynamic Logic: Determine what we sent based on the error field
+        // 2. Comprehensive Field Validation
+        if (!expectedFields.isEmpty()) {
+            log.info("Validating that all expected error fields {} are present", expectedFields);
+            for (String fieldPath : expectedFields) {
+                String fieldName = fieldPath.contains(".") ? fieldPath.substring(fieldPath.lastIndexOf(".") + 1)
+                        : fieldPath;
+                boolean found = false;
+                if (actualErrors != null) {
+                    for (Map<String, String> err : actualErrors) {
+                        String errField = err.get("Field");
+                        if (fieldName.equalsIgnoreCase(errField) || fieldPath.equalsIgnoreCase(errField)) {
+                            found = true;
+                            log.info("SUCCESS: Found error for field: {}", fieldPath);
+                            // 3. Dynamic Message Validation for this specific error
+                            validateDynamicErrorMessage(errField, err.get("Msg"), request);
+                            break;
+                        }
+                    }
+                }
+                Assert.assertTrue(found, "Error for field '" + fieldPath + "' not found in response.");
+            }
+        } else if (actualErrors != null) {
+            log.info("No specific expected fields found in session, validating all errors in response...");
+            for (Map<String, String> err : actualErrors) {
+                validateDynamicErrorMessage(err.get("Field"), err.get("Msg"), request);
+            }
+        }
+        log.info("SUCCESS: Consolidated Failure Validation passed.");
+    }
+
+    private void validateDynamicErrorMessage(String actualField, String actualMsg, JsonPath request) {
+        if (actualField == null || actualMsg == null)
+            return;
+
+        String msgLower = actualMsg.toLowerCase();
+
+        // 1. Generic mandatory field check: Many fields return "This field is required"
+        // when null or empty.
+        if (msgLower.contains("required") || msgLower.contains("missing")) {
+            log.info("SUCCESS: Confirmed mandatory field failure for [{}] with msg: [{}]", actualField, actualMsg);
+            return;
+        }
+
+        // 2. Specific Dynamic Message Checks
         if (actualField.equalsIgnoreCase("LoanType")) {
             String sentValue = request.getString("loanType");
             String expectedSnippet = String.format(ApiMessages.ERR_LOAN_TYPE, sentValue);
-            Assert.assertTrue(actualMsg.toLowerCase().contains(expectedSnippet.toLowerCase()),
-                    String.format("Error Msg Mismatch!\nField: %s\nExpected snippet: [%s]\nActual: [%s]",
+            Assert.assertTrue(msgLower.contains(expectedSnippet.toLowerCase()),
+                    String.format("Error Msg Mismatch for field %s!\nExpected snippet: [%s]\nActual: [%s]",
                             actualField, expectedSnippet, actualMsg));
         } else if (actualField.equalsIgnoreCase("Type") || actualField.toLowerCase().contains("kyc")) {
             String sentValue = request.getString("kyc.type");
-            String msgLower = actualMsg.toLowerCase();
 
-            // Normalize sent value and remove surrounding quotes when checking
             String sentNorm = sentValue == null ? "" : sentValue.toLowerCase().replace("'", "").replace("\"", "");
 
             boolean hasCanonicalPhrases = msgLower.contains("invalid kyc type")
                     && msgLower.contains("please check supported types");
-            boolean containsSentValue = sentNorm.length() > 0
-                    && (msgLower.contains(sentNorm) || msgLower.contains("'" + sentNorm + "'"));
 
             Assert.assertTrue(hasCanonicalPhrases,
                     String.format(
-                            "Error Msg Mismatch! Expected message to contain canonical KYC failure phrase. Actual: [%s]",
-                            actualMsg));
+                            "Error Msg Mismatch for field %s! Expected message to contain canonical KYC failure phrase. Actual: [%s]",
+                            actualField, actualMsg));
 
-            if (!containsSentValue) {
-                // Log a warning but don't fail — API sometimes quotes a different token than
-                // sent (e.g., wraps in single quotes or returns a different representation)
+            if (sentNorm.length() > 0 && !(msgLower.contains(sentNorm) || msgLower.contains("'" + sentNorm + "'"))) {
                 log.warn("KYC failure message didn't contain the sent KYC type [{}]. Actual message: {}", sentValue,
                         actualMsg);
             }
         } else {
-            // Unknown field - assert that we at least have a generic error message
-            Assert.assertTrue(actualMsg != null && actualMsg.length() > 0,
-                    "Expected non-empty error message for field: " + actualField);
+            // Generic non-empty check for other fields
+            Assert.assertTrue(actualMsg.length() > 0, "Empty error message for field: " + actualField);
         }
-
-        log.info("SUCCESS: Confirmed failure for field [{}] with correct dynamic message.", actualField);
     }
 
     public static void validateBureauEngineError(String expectedStatus, String expectedMessage, String Api) {

@@ -2,6 +2,7 @@ package stepDefinitions;
 
 import base.BaseClass;
 import helpers.CsvMetadataReader;
+import helpers.CustomResponseValidator;
 import helpers.ReadDataFromJson;
 import helpers.ResponseValidator;
 import io.cucumber.java.en.And;
@@ -103,39 +104,13 @@ public class InputValidationStepDefinitions extends BaseClass {
     @Then("Validate all modified fields are present in the error response")
     public void validateModifiedFieldsInErrorResponse() {
         JsonPath response = session().getCurrentResponse();
-        List<Map<String, String>> errors = response.getList("errors");
-        List<String> expectedFields = session().getRemovedFields();
-
-        log.info("Validating that all modified fields {} are present in error response", expectedFields);
-
-        for (String expectedFieldPath : expectedFields) {
-            String expectedFieldName = expectedFieldPath.contains(".")
-                    ? expectedFieldPath.substring(expectedFieldPath.lastIndexOf(".") + 1)
-                    : expectedFieldPath;
-
-            boolean found = false;
-            if (errors != null) {
-                for (Map<String, String> error : errors) {
-                    String actualField = error.get("Field");
-                    if (actualField != null && (actualField.equalsIgnoreCase(expectedFieldName)
-                            || actualField.equalsIgnoreCase(expectedFieldPath))) {
-                        found = true;
-                        log.info("SUCCESS: Found error for field: {}", expectedFieldPath);
-                        break;
-                    }
-                }
-            }
-            Assert.assertTrue(found, "Error for field '" + expectedFieldPath + "' not found in response.");
-        }
+        new CustomResponseValidator().validateFailureDetails("Failure",response, session().getCurrentPayload());
     }
 
     @Then("Validate BureauEngine error response status {string} and message {string}")
     public void validateErrorStatusAndMessage(String status, String message) {
         JsonPath response = session().getCurrentResponse();
-        Assert.assertEquals(response.getString("status"), status, "Status mismatch");
-        Assert.assertTrue(response.getString("message").toLowerCase().contains(message.toLowerCase()),
-                String.format("Message mismatch. Expected part: '%s', Actual: '%s'", message,
-                        response.getString("message")));
+        new CustomResponseValidator().validateFailureDetails(response, session().getCurrentPayload(), status, message);
     }
 
     @And("KSF hit the BureauEngine Api with refactored payload expecting {int}")

@@ -88,7 +88,7 @@ public class BureauEngineOrchestrator extends BaseClass {
             customValidator.validateBureauResponseSyncWithRequest(response, session().getCurrentPayload());
             ResponseValidator.assertNoNullValues(response);
         } else {
-            customValidator.validateFailureDetails(response, session().getCurrentPayload());
+            customValidator.validateFailureDetails(expectedStatus,response, session().getCurrentPayload());
         }
         log.info("KSF: BureauEngine Validation Successful. Final Response Content:\n{}", response.prettify());
     }
