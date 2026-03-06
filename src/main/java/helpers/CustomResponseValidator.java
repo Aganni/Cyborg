@@ -9,10 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
 
+import base.BaseClass;
+
 import static constants.JsonKeys.*;
 import static helpers.DynamicDataClass.getValue;
 
-public class CustomResponseValidator {
+public class CustomResponseValidator extends BaseClass {
 
     private static final Logger log = LogManager.getLogger(CustomResponseValidator.class);
 
@@ -20,8 +22,7 @@ public class CustomResponseValidator {
         JsonPath requestJson = new JsonPath(requestBody);
         log.info("KSF: Starting Cross-Layer Sync Validation (URL Params + Body)...");
 
-
-        syncWithDynamicData(response,Constants.APP_FORM_ID, Constants.APP_FORM_ID);
+        syncWithDynamicData(response, Constants.APP_FORM_ID, Constants.APP_FORM_ID);
         syncWithDynamicData(response, Constants.APPLICANT_ID, Constants.APPLICANT_ID);
 
         Object withdrawalId = getValue(Constants.WITHDRAWAL_ID);
@@ -31,7 +32,8 @@ public class CustomResponseValidator {
         } else {
             // key should be absent in case standard pull
             boolean isKeyPresent = response.getMap("").containsKey(Constants.WITHDRAWAL_ID);
-            Assert.assertFalse(isKeyPresent, "FAILURE: '" + Constants.WITHDRAWAL_ID + "' was found in the response but this is a Standard Pull!");
+            Assert.assertFalse(isKeyPresent, "FAILURE: '" + Constants.WITHDRAWAL_ID
+                    + "' was found in the response but this is a Standard Pull!");
         }
 
         // Validate JSON Body Fields (Mirroring)
@@ -66,7 +68,8 @@ public class CustomResponseValidator {
         String actualStr = String.valueOf(actual);
 
         try {
-            // Corrected order to prevent the "mismatch" string from appearing as the 'Actual' value
+            // Corrected order to prevent the "mismatch" string from appearing as the
+            // 'Actual' value
             Assert.assertEquals(actualStr, expectedStr, context + " mismatch!");
             log.info("SUCCESS: {} matches. Value: [{}]", context, actualStr);
         } catch (AssertionError e) {
@@ -94,44 +97,50 @@ public class CustomResponseValidator {
             Assert.assertTrue(actualMsg.toLowerCase().contains(expectedSnippet.toLowerCase()),
                     String.format("Error Msg Mismatch!\nField: %s\nExpected snippet: [%s]\nActual: [%s]",
                             actualField, expectedSnippet, actualMsg));
-        }
-        else if (actualField.equalsIgnoreCase("Type") || actualField.toLowerCase().contains("kyc")) {
+        } else if (actualField.equalsIgnoreCase("Type") || actualField.toLowerCase().contains("kyc")) {
             String sentValue = request.getString("kyc.type");
             String msgLower = actualMsg.toLowerCase();
 
             // Normalize sent value and remove surrounding quotes when checking
             String sentNorm = sentValue == null ? "" : sentValue.toLowerCase().replace("'", "").replace("\"", "");
 
-            boolean hasCanonicalPhrases = msgLower.contains("invalid kyc type") && msgLower.contains("please check supported types");
-            boolean containsSentValue = sentNorm.length() > 0 && (msgLower.contains(sentNorm) || msgLower.contains("'" + sentNorm + "'"));
+            boolean hasCanonicalPhrases = msgLower.contains("invalid kyc type")
+                    && msgLower.contains("please check supported types");
+            boolean containsSentValue = sentNorm.length() > 0
+                    && (msgLower.contains(sentNorm) || msgLower.contains("'" + sentNorm + "'"));
 
             Assert.assertTrue(hasCanonicalPhrases,
-                    String.format("Error Msg Mismatch! Expected message to contain canonical KYC failure phrase. Actual: [%s]", actualMsg));
+                    String.format(
+                            "Error Msg Mismatch! Expected message to contain canonical KYC failure phrase. Actual: [%s]",
+                            actualMsg));
 
             if (!containsSentValue) {
-                // Log a warning but don't fail — API sometimes quotes a different token than sent (e.g., wraps in single quotes or returns a different representation)
-                log.warn("KYC failure message didn't contain the sent KYC type [{}]. Actual message: {}", sentValue, actualMsg);
+                // Log a warning but don't fail — API sometimes quotes a different token than
+                // sent (e.g., wraps in single quotes or returns a different representation)
+                log.warn("KYC failure message didn't contain the sent KYC type [{}]. Actual message: {}", sentValue,
+                        actualMsg);
             }
         } else {
             // Unknown field - assert that we at least have a generic error message
-            Assert.assertTrue(actualMsg != null && actualMsg.length() > 0, "Expected non-empty error message for field: " + actualField);
+            Assert.assertTrue(actualMsg != null && actualMsg.length() > 0,
+                    "Expected non-empty error message for field: " + actualField);
         }
 
         log.info("SUCCESS: Confirmed failure for field [{}] with correct dynamic message.", actualField);
     }
 
     public static void validateBureauEngineError(String expectedStatus, String expectedMessage, String Api) {
-        JsonPath response = BureauEngineOrchestrator.getBureauEngineResponse();
+        JsonPath response = session().getBureauEngineResponse();
 
         // Status Check
-       if (Api.equalsIgnoreCase("CreditReport")) {
-           if (!expectedStatus.equalsIgnoreCase(response.getString(JsonKeys.STATUS))) {
-               String msg = String.format("FAIL: Expected Status %s but got %s. Full Response: %s",
-                       expectedStatus, response.getString(JsonKeys.STATUS), response.prettify());
-               log.error(msg);
-               Assert.fail(msg);
-           }
-       }
+        if (Api.equalsIgnoreCase("CreditReport")) {
+            if (!expectedStatus.equalsIgnoreCase(response.getString(JsonKeys.STATUS))) {
+                String msg = String.format("FAIL: Expected Status %s but got %s. Full Response: %s",
+                        expectedStatus, response.getString(JsonKeys.STATUS), response.prettify());
+                log.error(msg);
+                Assert.fail(msg);
+            }
+        }
         // Message Check
         String actualMessage = response.getString(JsonKeys.MESSAGE);
         if (expectedMessage != null && !actualMessage.contains(expectedMessage)) {

@@ -3,7 +3,9 @@ package dynamicData;
 import io.restassured.path.json.JsonPath;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 @Data
 public class TestSessionData {
@@ -14,19 +16,67 @@ public class TestSessionData {
     private String bureauExternalUploadPayload;
     private String bureauDocPresignedUrl;
 
+    // Orchestrator State
+    private String currentPayload;
+    private String bureauPullPayload;
+    private JsonPath currentResponse;
+    private JsonPath bureauEngineResponse;
+    private Integer lastStatusCode;
+
     // External Bureau API session fields
     private JsonPath externalBureauResponse;
     private Integer externalScoreSent;
     private boolean externalParse;
 
-    private java.util.List<String> removedFields = new java.util.ArrayList<>();
+    private List<String> removedFields = new ArrayList<>();
 
-    // Explicit getters/setters (Lombok @Data may not generate all in this project)
-    public java.util.List<String> getRemovedFields() {
+    // Explicit getters/setters (Supporting environment where Lombok might be
+    // limited)
+    public String getCurrentPayload() {
+        return currentPayload;
+    }
+
+    public void setCurrentPayload(String v) {
+        this.currentPayload = v;
+    }
+
+    public String getBureauPullPayload() {
+        return bureauPullPayload;
+    }
+
+    public void setBureauPullPayload(String v) {
+        this.bureauPullPayload = v;
+    }
+
+    public JsonPath getCurrentResponse() {
+        return currentResponse;
+    }
+
+    public void setCurrentResponse(JsonPath v) {
+        this.currentResponse = v;
+    }
+
+    public JsonPath getBureauEngineResponse() {
+        return bureauEngineResponse;
+    }
+
+    public void setBureauEngineResponse(JsonPath v) {
+        this.bureauEngineResponse = v;
+    }
+
+    public Integer getLastStatusCode() {
+        return lastStatusCode;
+    }
+
+    public void setLastStatusCode(Integer v) {
+        this.lastStatusCode = v;
+    }
+
+    public List<String> getRemovedFields() {
         return removedFields;
     }
 
-    public void setRemovedFields(java.util.List<String> v) {
+    public void setRemovedFields(List<String> v) {
         this.removedFields = v;
     }
 

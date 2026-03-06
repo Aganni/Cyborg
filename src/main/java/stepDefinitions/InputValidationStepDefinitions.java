@@ -14,18 +14,21 @@ import orchestrator.BureauEngineOrchestrator;
 import org.testng.Assert;
 
 import java.util.List;
+import java.util.Map;
 
-public class BureauPullStepDefinitions extends BaseClass {
+public class InputValidationStepDefinitions extends BaseClass {
 
-    private static final Logger log = LoggerFactory.getLogger(BureauPullStepDefinitions.class);
+    private static final Logger log = LoggerFactory.getLogger(InputValidationStepDefinitions.class);
 
     @When("KSF update all mandatory fields to empty string in payload based on {string}")
     public void updateMandatoryFieldsToEmpty(String csvFile) {
-        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
+        String currentPayload = session().getCurrentPayload();
         List<CsvMetadataReader.FieldMetadata> metadata = CsvMetadataReader.readMetadata(csvFile);
+        session().getRemovedFields().clear();
 
         for (CsvMetadataReader.FieldMetadata field : metadata) {
             if (field.isMandatory()) {
+                session().getRemovedFields().add(field.getField());
                 if ("Integer".equalsIgnoreCase(field.getExpectedType())) {
                     log.info("Updating mandatory integer field {} to 0 (type-aware empty)", field.getField());
                     currentPayload = ReadDataFromJson.updateJsonWithPath(currentPayload, field.getField(), 0);
@@ -35,42 +38,49 @@ public class BureauPullStepDefinitions extends BaseClass {
                 }
             }
         }
+        session().setCurrentPayload(currentPayload);
         BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF update all mandatory fields to null in payload based on {string}")
     public void updateMandatoryFieldsToNull(String csvFile) {
-        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
+        String currentPayload = session().getCurrentPayload();
         List<CsvMetadataReader.FieldMetadata> metadata = CsvMetadataReader.readMetadata(csvFile);
+        session().getRemovedFields().clear();
 
         for (CsvMetadataReader.FieldMetadata field : metadata) {
             if (field.isMandatory()) {
+                session().getRemovedFields().add(field.getField());
                 log.info("Updating mandatory field {} to null", field.getField());
                 currentPayload = ReadDataFromJson.updateJsonWithPath(currentPayload, field.getField(), null);
             }
         }
+        session().setCurrentPayload(currentPayload);
         BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF update mandatory integer fields with string in payload based on {string}")
     public void updateMandatoryIntegerFieldsWithString(String csvFile) {
-        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
+        String currentPayload = session().getCurrentPayload();
         List<CsvMetadataReader.FieldMetadata> metadata = CsvMetadataReader.readMetadata(csvFile);
+        session().getRemovedFields().clear();
 
         for (CsvMetadataReader.FieldMetadata field : metadata) {
             if (field.isMandatory() && "Integer".equalsIgnoreCase(field.getExpectedType())) {
+                session().getRemovedFields().add(field.getField());
                 log.info("Updating mandatory integer field {} to 'INVALID_STRING' (intentional type mismatch)",
                         field.getField());
                 currentPayload = ReadDataFromJson.updateJsonWithPath(currentPayload, field.getField(),
                         "INVALID_STRING");
             }
         }
+        session().setCurrentPayload(currentPayload);
         BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @When("KSF remove all non-mandatory fields from payload based on {string}")
     public void removeNonMandatoryFields(String csvFile) {
-        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
+        String currentPayload = session().getCurrentPayload();
         List<CsvMetadataReader.FieldMetadata> metadata = CsvMetadataReader.readMetadata(csvFile);
 
         for (CsvMetadataReader.FieldMetadata field : metadata) {
@@ -79,19 +89,49 @@ public class BureauPullStepDefinitions extends BaseClass {
                 currentPayload = ReadDataFromJson.removeJsonPath(currentPayload, field.getField());
             }
         }
+        session().setCurrentPayload(currentPayload);
         BureauEngineOrchestrator.setCurrentPayload(currentPayload);
     }
 
     @Then("Validate BureauEngine response is 200 and check no null values")
     public void validateSuccessAndNoNulls() {
-        JsonPath response = BureauEngineOrchestrator.getBureauEngineResponse();
+        JsonPath response = session().getCurrentResponse();
         log.info("Validating response for any null or empty values...");
         ResponseValidator.assertNoNullValues(response);
     }
 
+    @Then("Validate all modified fields are present in the error response")
+    public void validateModifiedFieldsInErrorResponse() {
+        JsonPath response = session().getCurrentResponse();
+        List<Map<String, String>> errors = response.getList("errors");
+        List<String> expectedFields = session().getRemovedFields();
+
+        log.info("Validating that all modified fields {} are present in error response", expectedFields);
+
+        for (String expectedFieldPath : expectedFields) {
+            String expectedFieldName = expectedFieldPath.contains(".")
+                    ? expectedFieldPath.substring(expectedFieldPath.lastIndexOf(".") + 1)
+                    : expectedFieldPath;
+
+            boolean found = false;
+            if (errors != null) {
+                for (Map<String, String> error : errors) {
+                    String actualField = error.get("Field");
+                    if (actualField != null && (actualField.equalsIgnoreCase(expectedFieldName)
+                            || actualField.equalsIgnoreCase(expectedFieldPath))) {
+                        found = true;
+                        log.info("SUCCESS: Found error for field: {}", expectedFieldPath);
+                        break;
+                    }
+                }
+            }
+            Assert.assertTrue(found, "Error for field '" + expectedFieldPath + "' not found in response.");
+        }
+    }
+
     @Then("Validate BureauEngine error response status {string} and message {string}")
     public void validateErrorStatusAndMessage(String status, String message) {
-        JsonPath response = BureauEngineOrchestrator.getBureauEngineResponse();
+        JsonPath response = session().getCurrentResponse();
         Assert.assertEquals(response.getString("status"), status, "Status mismatch");
         Assert.assertTrue(response.getString("message").toLowerCase().contains(message.toLowerCase()),
                 String.format("Message mismatch. Expected part: '%s', Actual: '%s'", message,

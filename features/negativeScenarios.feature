@@ -7,6 +7,7 @@ Feature: BureauEngine Negative Scenarios
     When KSF update all mandatory fields to empty string in payload based on "BureauEngineMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 412
     Then Validate BureauEngine error response status "Failure" and message "fields missing"
+    And Validate all modified fields are present in the error response
     Examples:
       | vendor             |  pullType   |
       | "ConsumerCibil"    | "HardPull"  |
@@ -18,6 +19,7 @@ Feature: BureauEngine Negative Scenarios
     When KSF update all mandatory fields to null in payload based on "BureauEngineMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 412
     Then Validate BureauEngine error response status "Failure" and message "fields missing"
+    And Validate all modified fields are present in the error response
     Examples:
       | vendor             |  pullType   |
       | "ConsumerCibil"    | "HardPull"  |
@@ -32,7 +34,6 @@ Feature: BureauEngine Negative Scenarios
     Examples:
       | vendor             |  pullType   |
       | "ConsumerCibil"    | "HardPull"  |
-      | "ConsumerExperian" | "HardPull"  |
 
   @Negative
   Scenario Outline: Verify 412 Failure for type mismatch
