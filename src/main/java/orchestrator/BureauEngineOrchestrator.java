@@ -88,7 +88,7 @@ public class BureauEngineOrchestrator extends BaseClass {
             customValidator.validateBureauResponseSyncWithRequest(response, session().getCurrentPayload());
             ResponseValidator.assertNoNullValues(response);
         } else {
-            customValidator.validateFailureDetails(expectedStatus,response, session().getCurrentPayload());
+            customValidator.validateFailureDetails(expectedStatus, response, session().getCurrentPayload());
         }
         log.info("KSF: BureauEngine Validation Successful. Final Response Content:\n{}", response.prettify());
     }
@@ -277,5 +277,97 @@ public class BureauEngineOrchestrator extends BaseClass {
             log.info("[External parse=true] Score from parsed XML: {}", responseScore);
         }
         log.info("External BureauEngine validation PASSED. Vendor={}, Score={}", actualVendor, responseScore);
+    }
+
+    public static void buildReplicationPayload(String replicationType, String vendor, String pullType)
+            throws Exception {
+        org.json.JSONObject payload = new org.json.JSONObject();
+        org.json.JSONObject source = new org.json.JSONObject();
+
+        if ("bureauPullId".equalsIgnoreCase(replicationType)) {
+            source.put("bureauPullId", getValue("sourceBureauPullId"));
+        } else {
+            source.put("appFormId", getValue("sourceAppFormId"));
+            source.put("applicantId", getValue("sourceApplicantId"));
+        }
+
+        // Add optional withdrawalId for source if present
+        Object sourceWithdrawalId = getValue("sourceWithdrawalId");
+        if (sourceWithdrawalId != null) {
+            source.put("withdrawalId", sourceWithdrawalId);
+        }
+
+        payload.put("source", source);
+
+        org.json.JSONArray targets = new org.json.JSONArray();
+        org.json.JSONObject target = new org.json.JSONObject();
+        target.put("appFormId", getValue(Constants.APP_FORM_ID));
+        target.put("applicantId", getValue(Constants.APPLICANT_ID));
+
+        Object targetWithdrawalId = getValue(Constants.WITHDRAWAL_ID);
+        if (targetWithdrawalId != null) {
+            target.put("withdrawalId", targetWithdrawalId);
+            target.put("lpc", getValue("targetLpc"));
+        }
+        targets.put(target);
+        payload.put("targets", targets);
+
+        org.json.JSONObject bureau = new org.json.JSONObject();
+        bureau.put("vendor", vendor);
+        bureau.put("pullType", pullType);
+        payload.put("bureau", bureau);
+
+        session().setCurrentPayload(payload.toString());
+        log.info("Replication payload built: {}", payload.toString());
+    }
+
+    public static void sendReplicationRequest(int statusCode) throws Exception {
+        log.info("Hitting Bureau Replication API with expected status: {}", statusCode);
+        String requestBody = session().getCurrentPayload();
+
+        io.restassured.RestAssured.config = io.restassured.RestAssured.config()
+                .sslConfig(io.restassured.config.SSLConfig.sslConfig().with().relaxedHTTPSValidation());
+
+        String rawResponse = io.restassured.RestAssured.given()
+                .spec(HelperMethods.requestSpecifications())
+                .baseUri(HelperMethods.initializeEnvironment("bureauengine"))
+                .contentType("application/json")
+                .body(requestBody)
+                .when()
+                .post(APIEndPoints.BUREAU_REPLICATION_API)
+                .then()
+                .statusCode(statusCode)
+                .extract().response().asString();
+
+        JsonPath jsonResponse = new JsonPath(rawResponse);
+        session().setBureauEngineResponse(jsonResponse);
+        session().setCurrentResponse(jsonResponse);
+        session().setLastStatusCode(statusCode);
+        log.info("Replication API response: {}", rawResponse);
+    }
+
+    public void validateReplicationResponse(String expectedStatus) {
+        JsonPath response = session().getBureauEngineResponse();
+        String rawBody = response.prettify();
+        log.info("KSF: Validating Replication Response. Raw Body:\n{}", rawBody);
+        String actualStatus = response.getString("status");
+
+        Assert.assertEquals(actualStatus, expectedStatus, "Replication Status Mismatch!");
+
+        if ("Success".equalsIgnoreCase(expectedStatus)) {
+            // The actual response uses 'success' list as seen in logs
+            List<Map<String, Object>> successList = response.getList("success");
+            Assert.assertNotNull(successList,
+                    "Success list should not be null in successful replication! Response: " + rawBody);
+            // In some cases it might be empty if all failed, but here we expect at least
+            // one success
+            Assert.assertFalse(successList.isEmpty(), "Success list should not be empty in successful replication!");
+
+            for (Map<String, Object> item : successList) {
+                Assert.assertNotNull(item.get("appFormId"), "appFormId should not be null in success list");
+                log.info("Replication successful for AppFormId: {}", item.get("appFormId"));
+            }
+        }
+        log.info("Replication Response Validation PASSED. Status: {}", actualStatus);
     }
 }

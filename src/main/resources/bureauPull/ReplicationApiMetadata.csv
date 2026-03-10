@@ -1,0 +1,7 @@
+Field,Description,Mandatory,ExpectedType,TestScenario
+source.appFormId,Source appFormId for replication.,Y,String,REMOVE
+source.applicantId,Source applicantId for replication.,Y,Integer,REMOVE
+targets[n].appFormId,Destination appFormId.,Y,String,REMOVE
+targets[n].applicantId,Destination applicantId.,Y,Integer,REMOVE
+bureau.vendor,Bureau vendor to replicate.,Y,String,REMOVE
+bureau.pullType,Pull type to replicate.,Y,String,REMOVE

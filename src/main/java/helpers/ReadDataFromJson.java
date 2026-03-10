@@ -84,8 +84,7 @@ public class ReadDataFromJson {
         JSONParser jsonParser = new JSONParser();
         FileReader fileReader = new FileReader(payload);
         Object obj = jsonParser.parse(fileReader);
-        JSONObject jsonObject = (JSONObject) obj;
-        return jsonObject.toString();
+        return obj.toString();
     }
 
     public static String updateJsonWithPath(String requestBody, String path, Object value) {

@@ -57,7 +57,11 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @Then("Validate BureauEngine response having status {string} for {string}")
     public void validateBureauEngineResponse(String Status, String bureauVendor) {
-        bureauOrchestrator.validateBureauEngineResponse(Status);
+        if (bureauVendor.equalsIgnoreCase("Replication")) {
+            bureauOrchestrator.validateReplicationResponse(Status);
+        } else {
+            bureauOrchestrator.validateBureauEngineResponse(Status);
+        }
     }
 
     @And("KSF set withdrawalId as {string} for re-pull")
@@ -78,9 +82,10 @@ public class BureauEngineStepDefiniton extends BaseClass {
     }
 
     @Then("Validate BureauEngine error response {string} and message constant {string} for {string} Api")
-    public void validateBureauEngineErrorResponseAndMessageConstant(String expectedStatus, String messageConstant, String Api) {
+    public void validateBureauEngineErrorResponseAndMessageConstant(String expectedStatus, String messageConstant,
+            String Api) {
         String expectedMessage = getMessageFromConstant(messageConstant);
-        CustomResponseValidator.validateBureauEngineError(expectedStatus, expectedMessage,Api);
+        CustomResponseValidator.validateBureauEngineError(expectedStatus, expectedMessage, Api);
     }
 
     private String getMessageFromConstant(String constantName) {
@@ -153,5 +158,43 @@ public class BureauEngineStepDefiniton extends BaseClass {
     @Then("KSF validate external response score for vendor {string}")
     public void ksfValidateExternalResponseScoreForVendor(String vendor) {
         bureauOrchestrator.validateExternalBureauResponse(vendor);
+    }
+
+    @Given("KSF set source bureau data for {string} from {string}")
+    public void ksfSetSourceBureauDataForFrom(String vendor, String jsonFile) throws Exception {
+        String data = helpers.ReadDataFromJson.parseJsonToString("src/main/resources/bureauPull/" + jsonFile);
+        io.restassured.path.json.JsonPath jp = new io.restassured.path.json.JsonPath(data);
+        java.util.List<java.util.Map<String, Object>> list = jp.getList("");
+        for (java.util.Map<String, Object> map : list) {
+            if (vendor.equalsIgnoreCase((String) map.get("vendor"))) {
+                setValue("sourceAppFormId", map.get("appFormId"));
+                setValue("sourceApplicantId", map.get("applicantId"));
+                setValue("sourceBureauPullId", map.get("bureauPullId"));
+                log.info("Set source data for {}: appFormId={}, applicantId={}, bureauPullId={}",
+                        vendor, map.get("appFormId"), map.get("applicantId"), map.get("bureauPullId"));
+                break;
+            }
+        }
+    }
+
+    @Given("KSF set source withdrawalId as {string}")
+    public void ksfSetSourceWithdrawalIdAs(String withdrawalId) {
+        setValue("sourceWithdrawalId", withdrawalId);
+    }
+
+    @Given("KSF set target LPC as {string}")
+    public void ksfSetTargetLpcAs(String lpc) {
+        setValue("targetLpc", lpc);
+    }
+
+    @When("KSF generate replication payload using {string} for {string} with {string}")
+    public void ksfGenerateReplicationPayloadUsingForWith(String replicationType, String vendor, String pullType)
+            throws Exception {
+        bureauOrchestrator.buildReplicationPayload(replicationType, vendor, pullType);
+    }
+
+    @When("KSF hit the Bureau Replication Api expecting {int}")
+    public void ksfHitTheBureauReplicationApiExpecting(int statusCode) throws Exception {
+        bureauOrchestrator.sendReplicationRequest(statusCode);
     }
 }

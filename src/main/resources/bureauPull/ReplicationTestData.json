@@ -1,0 +1,22 @@
+[
+    {
+        "bureauPullId": "df1dc48e-26b5-4db5-9c14-ac4db9745740",
+        "appFormId": "9e92dc3d-4411-430e-87a9-33eaf82b0d73",
+        "applicantId": 655756,
+        "vendor": "ConsumerExperian",
+        "pullType": "HardPull"
+    },
+    {
+        "bureauPullId": "67c13db7-3731-4815-9736-bc72526db82b",
+        "appFormId": "9e92dc3d-4411-430e-87a9-33eaf82b0d73",
+        "applicantId": 655756,
+        "vendor": "ConsumerCibil",
+        "pullType": "HardPull"
+    },
+    {
+        "vendor": "MismatchVendor",
+        "appFormId": "NON-EXISTENT-ID",
+        "applicantId": 0,
+        "bureauPullId": "INVALID-PULL-ID"
+    }
+]
