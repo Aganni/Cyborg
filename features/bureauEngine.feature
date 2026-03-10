@@ -15,7 +15,6 @@ Feature: BureauEngine Scenarios
       | "ConsumerCrif"     | "HardPull"  |
       | "ConsumerExperian" | "SoftPull"  |
 
-
   @Regression
   Scenario Outline:Successful BureauPull at Withdrawal level
     Given KSF generate unique stateless identifiers for the request
@@ -133,7 +132,7 @@ Feature: BureauEngine Scenarios
   Scenario Outline: Verify 412 Failure for empty mandatory fields
     Given KSF generate unique stateless identifiers for the request
     And KSF prepare bureau request for <vendor> with <pullType>
-    When KSF update all mandatory fields to empty string in payload based on "BureauEngineMetadata.csv"
+    When KSF update all mandatory fields to empty string in payload based on "PostCreditReportApiMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 412
     Then Validate BureauEngine error response status "Failure" and message "fields missing"
     And Validate all modified fields are present in the error response
@@ -145,7 +144,7 @@ Feature: BureauEngine Scenarios
   Scenario Outline: Verify 412 Failure for null mandatory fields
     Given KSF generate unique stateless identifiers for the request
     And KSF prepare bureau request for <vendor> with <pullType>
-    When KSF update all mandatory fields to null in payload based on "BureauEngineMetadata.csv"
+    When KSF update all mandatory fields to null in payload based on "PostCreditReportApiMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 412
     Then Validate BureauEngine error response status "Failure" and message "fields missing"
     And Validate all modified fields are present in the error response
@@ -157,7 +156,7 @@ Feature: BureauEngine Scenarios
   Scenario Outline: Verify 200 Success after removing non-mandatory fields
     Given KSF generate unique stateless identifiers for the request
     And KSF prepare bureau request for <vendor> with <pullType>
-    When KSF remove all non-mandatory fields from payload based on "BureauEngineMetadata.csv"
+    When KSF remove all non-mandatory fields from payload based on "PostCreditReportApiMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 200
     Then Validate BureauEngine response is 200 and check no null values
     Examples:
@@ -180,3 +179,29 @@ Feature: BureauEngine Scenarios
     Examples:
       | vendor             |  pullType   |
       | "ConsumerCibil"    | "HardPull"  |
+
+  @Regression
+  Scenario Outline: Verify 412 Failure for External API with empty mandatory fields
+    Given KSF generate unique stateless identifiers for the request
+    And KSF generate <lpc> payload for external api with <pullType> for <vendor> and parse <parse>
+    When KSF update all mandatory fields to empty string in payload based on "ExternalApiMetadata.csv"
+    And KSF hit the External BureauEngine Api with refactored payload expecting 412
+    Then Validate BureauEngine error response status "Failure" and message "fields missing"
+    And Validate all modified fields are present in the error response
+    Examples:
+      | vendor             | pullType   | lpc   | parse   |
+      | "ConsumerCibil"    | "HardPull" | "ESC" | "true"  |
+      | "ConsumerExperian" | "HardPull" | "ESC" | "false" |
+
+  @Regression
+  Scenario Outline: Verify 412 Failure for External API with null mandatory fields
+    Given KSF generate unique stateless identifiers for the request
+    And KSF generate <lpc> payload for external api with <pullType> for <vendor> and parse <parse>
+    When KSF update all mandatory fields to null in payload based on "ExternalApiMetadata.csv"
+    And KSF hit the External BureauEngine Api with refactored payload expecting 412
+    Then Validate BureauEngine error response status "Failure" and message "fields missing"
+    And Validate all modified fields are present in the error response
+    Examples:
+      | vendor             | pullType   | lpc   | parse   |
+      | "ConsumerCibil"    | "HardPull" | "ESC" | "true"  |
+      | "ConsumerExperian" | "HardPull" | "ESC" | "false" |
