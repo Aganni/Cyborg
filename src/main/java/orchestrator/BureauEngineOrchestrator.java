@@ -13,7 +13,8 @@ import org.testng.Assert;
 import java.util.List;
 import java.util.Map;
 
-import static helpers.DynamicDataClass.getValue;
+import static dynamicData.DynamicDataClass.setValue;
+import static dynamicData.DynamicDataClass.getValue;
 import static helpers.ReadDataFromJson.parseJsonToString;
 import static helpers.ReadDataFromJson.updateJsonWithPath;
 
@@ -279,95 +280,146 @@ public class BureauEngineOrchestrator extends BaseClass {
         log.info("External BureauEngine validation PASSED. Vendor={}, Score={}", actualVendor, responseScore);
     }
 
-    public static void buildReplicationPayload(String replicationType, String vendor, String pullType)
+    public static void setSourceBureauData(String vendor, String pullType,String jsonFile) throws Exception {
+        String data = helpers.ReadDataFromJson.parseJsonToString("src/main/resources/bureauPull/" + jsonFile);
+        io.restassured.path.json.JsonPath jp = new io.restassured.path.json.JsonPath(data);
+        java.util.List<java.util.Map<String, Object>> list = jp.getList("");
+        for (java.util.Map<String, Object> map : list) {
+            if (vendor.equalsIgnoreCase((String) map.get("vendor")) && pullType.equalsIgnoreCase((String) map.get("pullType"))) {
+                setValue("sourceAppFormId", map.get("appFormId"));
+                setValue("sourceApplicantId", map.get("applicantId"));
+                setValue("sourceBureauPullId", map.get("bureauPullId"));
+                log.info("Set source data for {}: appFormId={}, applicantId={}, bureauPullId={}",
+                        vendor, map.get("appFormId"), map.get("applicantId"), map.get("bureauPullId"));
+                break;
+            }
+        }
+    }
+
+    public static void sendReplicationRequest(int statusCode) throws Exception {
+        log.info("Hitting Bureau Replication API with expected status: {}", statusCode);
+        session().setCurrentResponse(HelperMethods.doPost("bureauengine", APIEndPoints.BUREAU_REPLICATION_API, session().getCurrentPayload(), statusCode));
+        log.info("Replication API response: {}", session().getCurrentResponse());
+    }
+
+    public static void buildBureauEngineReplicationApiPayload(String replicationType, String vendor, String pullType, int targetCount)
             throws Exception {
         org.json.JSONObject payload = new org.json.JSONObject();
-        org.json.JSONObject source = new org.json.JSONObject();
 
+        // 1. BUILD SOURCE
+        org.json.JSONObject source = new org.json.JSONObject();
         if ("bureauPullId".equalsIgnoreCase(replicationType)) {
             source.put("bureauPullId", getValue("sourceBureauPullId"));
         } else {
             source.put("appFormId", getValue("sourceAppFormId"));
             source.put("applicantId", getValue("sourceApplicantId"));
+            // Optional source withdrawal
+            if (getValue("sourceWithdrawalId") != null) {
+                source.put("withdrawalId", getValue("sourceWithdrawalId"));
+            }
         }
-
-        // Add optional withdrawalId for source if present
-        Object sourceWithdrawalId = getValue("sourceWithdrawalId");
-        if (sourceWithdrawalId != null) {
-            source.put("withdrawalId", sourceWithdrawalId);
-        }
-
         payload.put("source", source);
 
-        org.json.JSONArray targets = new org.json.JSONArray();
-        org.json.JSONObject target = new org.json.JSONObject();
-        target.put("appFormId", getValue(Constants.APP_FORM_ID));
-        target.put("applicantId", getValue(Constants.APPLICANT_ID));
+        // 2. BUILD TARGETS (Dynamic Loop)
+        org.json.JSONArray targetsArray = new org.json.JSONArray();
 
-        Object targetWithdrawalId = getValue(Constants.WITHDRAWAL_ID);
-        if (targetWithdrawalId != null) {
-            target.put("withdrawalId", targetWithdrawalId);
-            target.put("lpc", getValue("targetLpc"));
+        if (targetCount <= 1) {
+            // Handle Single Target from Session (Your original logic)
+            org.json.JSONObject target = new org.json.JSONObject();
+            target.put("appFormId", getValue(Constants.APP_FORM_ID));
+            target.put("applicantId", getValue(Constants.APPLICANT_ID));
+
+            if (getValue(Constants.WITHDRAWAL_ID) != null) {
+                target.put("withdrawalId", getValue(Constants.WITHDRAWAL_ID));
+                target.put("lpc", getValue("targetLpc"));
+            }
+            targetsArray.put(target);
+        } else {
+            // Handle Multi-Target Generation (Your multi-logic)
+            for (int i = 0; i < targetCount; i++) {
+                org.json.JSONObject target = new org.json.JSONObject();
+                target.put("appFormId", "KSF-TARGET-" + System.currentTimeMillis() + "-" + i);
+                target.put("applicantId", 1000000 + (int) (Math.random() * 9000000));
+
+                if (i % 2 == 0) {
+                    target.put("withdrawalId", "target-withdrawal-" + i);
+                    target.put("lpc", "NVI");
+                }
+                targetsArray.put(target);
+            }
         }
-        targets.put(target);
-        payload.put("targets", targets);
+        payload.put("targets", targetsArray);
 
+        // 3. BUILD BUREAU
         org.json.JSONObject bureau = new org.json.JSONObject();
         bureau.put("vendor", vendor);
         bureau.put("pullType", pullType);
         payload.put("bureau", bureau);
 
         session().setCurrentPayload(payload.toString());
-        log.info("Replication payload built: {}", payload.toString());
+        log.info("Replication payload built for {} targets:\n{}", targetCount, payload.toString(4));
     }
 
-    public static void sendReplicationRequest(int statusCode) throws Exception {
-        log.info("Hitting Bureau Replication API with expected status: {}", statusCode);
-        String requestBody = session().getCurrentPayload();
+    public static void validateReportDataConsistency(String vendor) throws Exception {
+        log.info("KSF: Validating Report Data Consistency for vendor: {}", vendor);
 
-        io.restassured.RestAssured.config = io.restassured.RestAssured.config()
-                .sslConfig(io.restassured.config.SSLConfig.sslConfig().with().relaxedHTTPSValidation());
+        // 1. Fetch Source Report Details
+        String sourceAppFormId = getValue("sourceAppFormId").toString();
+        int sourceApplicantId = (Integer) getValue("sourceApplicantId");
 
-        String rawResponse = io.restassured.RestAssured.given()
-                .spec(HelperMethods.requestSpecifications())
-                .baseUri(HelperMethods.initializeEnvironment("bureauengine"))
-                .contentType("application/json")
-                .body(requestBody)
-                .when()
-                .post(APIEndPoints.BUREAU_REPLICATION_API)
-                .then()
-                .statusCode(statusCode)
-                .extract().response().asString();
+        JsonPath sourceReports = HelperMethods.getCreditReports(sourceAppFormId, sourceApplicantId);
+        Map<String, Object> sourceReportData = extractReportDetails(sourceReports, vendor);
 
-        JsonPath jsonResponse = new JsonPath(rawResponse);
-        session().setBureauEngineResponse(jsonResponse);
-        session().setCurrentResponse(jsonResponse);
-        session().setLastStatusCode(statusCode);
-        log.info("Replication API response: {}", rawResponse);
+        log.info("Source Report Data: Score={}, DocId={}", sourceReportData.get("score"),
+                sourceReportData.get("docId"));
+
+        // 2. Fetch Target Report Details from Replication Response
+        JsonPath replResponse = session().getBureauEngineResponse();
+        List<Map<String, Object>> successList = replResponse.getList("success");
+        Assert.assertNotNull(successList, "No successful targets found for consistency check!");
+
+        for (Map<String, Object> target : successList) {
+            String targetAppFormId = target.get("appFormId").toString();
+            int targetApplicantId = (Integer) target.get("applicantId");
+
+            log.info("Checking data for Target AppFormId: {}", targetAppFormId);
+            JsonPath targetReports = HelperMethods.getCreditReports(targetAppFormId, targetApplicantId);
+            Map<String, Object> targetReportData = extractReportDetails(targetReports, vendor);
+
+            log.info("Target Report Data: Score={}, DocId={}", targetReportData.get("score"),
+                    targetReportData.get("docId"));
+
+            // 3. Assertions
+            Assert.assertEquals(targetReportData.get("score"), sourceReportData.get("score"),
+                    "Score mismatch between source and target for AppFormId: " + targetAppFormId);
+
+            // Compare S3 document content instead of just IDs
+            log.info("Comparing S3 document content for source and target...");
+            String sourceContent = HelperMethods
+                    .downloadFileToString(HelperMethods.getFilePresignedUrl(sourceReportData.get("docId").toString()));
+            String targetContent = HelperMethods
+                    .downloadFileToString(HelperMethods.getFilePresignedUrl(targetReportData.get("docId").toString()));
+
+            Assert.assertEquals(targetContent, sourceContent,
+                    "S3 Document content mismatch between source and target for AppFormId: " + targetAppFormId);
+            log.info("S3 Document content matches for AppFormId: {}", targetAppFormId);
+        }
+        log.info("Report Data Consistency Validation PASSED for all targets.");
     }
 
-    public void validateReplicationResponse(String expectedStatus) {
-        JsonPath response = session().getBureauEngineResponse();
-        String rawBody = response.prettify();
-        log.info("KSF: Validating Replication Response. Raw Body:\n{}", rawBody);
-        String actualStatus = response.getString("status");
-
-        Assert.assertEquals(actualStatus, expectedStatus, "Replication Status Mismatch!");
-
-        if ("Success".equalsIgnoreCase(expectedStatus)) {
-            // The actual response uses 'success' list as seen in logs
-            List<Map<String, Object>> successList = response.getList("success");
-            Assert.assertNotNull(successList,
-                    "Success list should not be null in successful replication! Response: " + rawBody);
-            // In some cases it might be empty if all failed, but here we expect at least
-            // one success
-            Assert.assertFalse(successList.isEmpty(), "Success list should not be empty in successful replication!");
-
-            for (Map<String, Object> item : successList) {
-                Assert.assertNotNull(item.get("appFormId"), "appFormId should not be null in success list");
-                log.info("Replication successful for AppFormId: {}", item.get("appFormId"));
+    private static Map<String, Object> extractReportDetails(JsonPath response, String vendor) {
+        List<Map<String, Object>> reports = response.getList("reports");
+        for (Map<String, Object> report : reports) {
+            if (vendor.equalsIgnoreCase((String) report.get("bureauName"))) {
+                List<Map<String, Object>> creditReports = (List<Map<String, Object>>) report.get("creditReports");
+                if (creditReports != null && !creditReports.isEmpty()) {
+                    // Extract docId and score from the first matching document
+                    Map<String, Object> doc = creditReports.get(0);
+                    Integer score = (Integer) report.get("score");
+                    return Map.of("score", score, "docId", doc.get("id"));
+                }
             }
         }
-        log.info("Replication Response Validation PASSED. Status: {}", actualStatus);
+        throw new RuntimeException("Could not extract report details for vendor: " + vendor);
     }
 }

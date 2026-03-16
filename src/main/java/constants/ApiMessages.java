@@ -8,6 +8,6 @@ public interface ApiMessages {
     String ERR_LOAN_TYPE = "invalid value %s for BureauPullRequest.LoanType. Please check supported loan types for provided vendor and pullType";
 
     // New constants
-    String BUREAU_RECORDS_EXISTS = "bureau records for provided combination exists in db. bureau pull initiation cancelled";
+    String BUREAU_RECORDS_EXISTS_FOR_CREDIT_API = "bureau records for provided combination exists in db. bureau pull initiation cancelled";
     String BUREAU_RECORDS_EXISTS_FOR_EXTENAL_API = "Bureau file already exists for the given combination";
 }

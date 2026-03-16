@@ -8,6 +8,7 @@ import helpers.DynamicDataClass;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
+import io.cucumber.java.PendingException;
 import io.cucumber.java.Scenario;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -15,8 +16,9 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import orchestrator.BureauEngineOrchestrator;
 
-import static helpers.DynamicDataClass.getValue;
-import static helpers.DynamicDataClass.setValue;
+import static dynamicData.DynamicDataClass.setValue;
+import static dynamicData.DynamicDataClass.getValue;
+import static helpers.CustomResponseValidator.validateReplicationResponse;
 import static helpers.ReadDataFromJson.updateJsonWithPath;
 
 public class BureauEngineStepDefiniton extends BaseClass {
@@ -43,7 +45,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @Given("KSF generate unique stateless identifiers for the request")
     public void ksfGenerateUniqueStatelessIdentifiersForTheTransaction() {
-        setValue(Constants.APP_FORM_ID, "KSF-AD-" + System.currentTimeMillis());
+        setValue(Constants.APP_FORM_ID, "ksf-appform-id-" + System.currentTimeMillis());
         setValue(Constants.APPLICANT_ID, (int) (Math.random() * 9000000) + 1000000);
 
         log.info("Generated stateless IDs - AppFormId: {}, ApplicantId: {}", getValue(Constants.APP_FORM_ID),
@@ -52,16 +54,12 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @When("KSF hit the BureauEngine Api for {string} BureauPull with {string} payload expecting {int}")
     public void BureauEngineBreauPull(String bureauVendor, String pullType, int statusCode) throws Exception {
-        bureauOrchestrator.sendBureauPullRequest(bureauVendor, pullType, statusCode);
+        BureauEngineOrchestrator.sendBureauPullRequest(bureauVendor, pullType, statusCode);
     }
 
     @Then("Validate BureauEngine response having status {string} for {string}")
     public void validateBureauEngineResponse(String Status, String bureauVendor) {
-        if (bureauVendor.equalsIgnoreCase("Replication")) {
-            bureauOrchestrator.validateReplicationResponse(Status);
-        } else {
-            bureauOrchestrator.validateBureauEngineResponse(Status);
-        }
+        BureauEngineOrchestrator.validateBureauEngineResponse(Status);
     }
 
     @And("KSF set withdrawalId as {string} for re-pull")
@@ -72,7 +70,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @When("KSF update payload path {string} with value {string}")
     public void ksfUpdatePayloadPathWithValue(String path, String value) {
-        String currentPayload = bureauOrchestrator.getCurrentPayload();
+        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
         if (currentPayload == null) {
             throw new RuntimeException("No active payload found. Ensure a scenario step has initialized the request.");
         }
@@ -99,15 +97,15 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @And("KSF hit the BureauEngine Api again with same identifiers expecting {int}")
     public void ksfHitTheBureauEngineApiAgainWithSameIdentifiersExpecting(int expectedStatusCode) throws Exception {
-        bureauOrchestrator.sendRequestWithSameIdentifiers(expectedStatusCode);
+        BureauEngineOrchestrator.sendRequestWithSameIdentifiers(expectedStatusCode);
     }
 
     @When("KSF hit BureauEngine for {string} with PullType {string}, KycType {string} and value {string} with {int}")
     public void ksfHitBureauEngineForWithPullTypeKycTypeAndValue(String vendor, String pullType, String kycType,
             String kycValue, int statusCode) throws Exception {
-        bureauOrchestrator.buildPayload(vendor, pullType);
+        BureauEngineOrchestrator.buildPayload(vendor, pullType);
 
-        String currentPayload = bureauOrchestrator.getCurrentPayload();
+        String currentPayload = BureauEngineOrchestrator.getCurrentPayload();
         currentPayload = updateJsonWithPath(currentPayload, "kyc.type", kycType);
 
         String uniqueKycValue = kycValue;
@@ -119,24 +117,24 @@ public class BureauEngineStepDefiniton extends BaseClass {
         }
         currentPayload = updateJsonWithPath(currentPayload, "kyc.value", uniqueKycValue);
         session().setCurrentPayload(currentPayload);
-        bureauOrchestrator.sendRequest(vendor, statusCode);
+        BureauEngineOrchestrator.sendRequest(vendor, statusCode);
     }
 
     @Given("KSF prepare bureau request for {string} with {string}")
     public void ksfPrepareBureauRequestForWith(String vendor, String pullType) {
-        bureauOrchestrator.buildPayload(vendor, pullType);
+        BureauEngineOrchestrator.buildPayload(vendor, pullType);
         log.info("Prepared payload for {} {}", vendor, pullType);
     }
 
     @Given("KSF hit the BureauEngine Api with prepared payload expecting {int}")
     public void ksfHitTheBureauEngineApiWithPreparedPayloadExpecting(int statusCode) throws Exception {
-        bureauOrchestrator.sendRequest("PreparedRequest", statusCode);
+        BureauEngineOrchestrator.sendRequest("PreparedRequest", statusCode);
     }
 
     @Then("KSF verify the {string} bureau {string} XML has {string} as {string}")
     public void ksfVerifyTheBureauXmlHasTagAs(String vendor, String docType, String xmlTag, String expectedValue)
             throws Exception {
-        bureauOrchestrator.verifyBureauRequestXml(vendor, docType, xmlTag, expectedValue);
+        BureauEngineOrchestrator.verifyBureauRequestXml(vendor, docType, xmlTag, expectedValue);
     }
 
     // ── External Bureau API Steps ────────────────────────────────────────────────
@@ -147,39 +145,22 @@ public class BureauEngineStepDefiniton extends BaseClass {
         boolean parse = Boolean.parseBoolean(parseStr);
         log.info("Building external bureau payload: vendor={}, pullType={}, lpc={}, parse={}", vendor, pullType, lpc,
                 parse);
-        bureauOrchestrator.buildExternalPullRequestPayload(lpc, pullType, vendor, parse);
+        BureauEngineOrchestrator.buildExternalPullRequestPayload(lpc, pullType, vendor, parse);
     }
 
     @When("KSF hit the external BureauEngine Api expecting {int}")
     public void ksfHitTheExternalBureauEngineApiExpecting(int expectedStatusCode) throws Exception {
-        bureauOrchestrator.sendExternalRequest(expectedStatusCode);
+        BureauEngineOrchestrator.sendExternalRequest(expectedStatusCode);
     }
 
     @Then("KSF validate external response score for vendor {string}")
     public void ksfValidateExternalResponseScoreForVendor(String vendor) {
-        bureauOrchestrator.validateExternalBureauResponse(vendor);
+        BureauEngineOrchestrator.validateExternalBureauResponse(vendor);
     }
 
-    @Given("KSF set source bureau data for {string} from {string}")
-    public void ksfSetSourceBureauDataForFrom(String vendor, String jsonFile) throws Exception {
-        String data = helpers.ReadDataFromJson.parseJsonToString("src/main/resources/bureauPull/" + jsonFile);
-        io.restassured.path.json.JsonPath jp = new io.restassured.path.json.JsonPath(data);
-        java.util.List<java.util.Map<String, Object>> list = jp.getList("");
-        for (java.util.Map<String, Object> map : list) {
-            if (vendor.equalsIgnoreCase((String) map.get("vendor"))) {
-                setValue("sourceAppFormId", map.get("appFormId"));
-                setValue("sourceApplicantId", map.get("applicantId"));
-                setValue("sourceBureauPullId", map.get("bureauPullId"));
-                log.info("Set source data for {}: appFormId={}, applicantId={}, bureauPullId={}",
-                        vendor, map.get("appFormId"), map.get("applicantId"), map.get("bureauPullId"));
-                break;
-            }
-        }
-    }
-
-    @Given("KSF set source withdrawalId as {string}")
-    public void ksfSetSourceWithdrawalIdAs(String withdrawalId) {
-        setValue("sourceWithdrawalId", withdrawalId);
+    @Given("KSF set source bureau data for {string} with {string} from {string}")
+    public void ksfSetSourceBureauDataForFrom(String vendor, String pullType, String jsonFile) throws Exception {
+              BureauEngineOrchestrator.setSourceBureauData(vendor,pullType,jsonFile);
     }
 
     @Given("KSF set target LPC as {string}")
@@ -187,14 +168,29 @@ public class BureauEngineStepDefiniton extends BaseClass {
         setValue("targetLpc", lpc);
     }
 
-    @When("KSF generate replication payload using {string} for {string} with {string}")
-    public void ksfGenerateReplicationPayloadUsingForWith(String replicationType, String vendor, String pullType)
+    @When("KSF generate replication payload using {string} for {string} and {string} with {int} targets")
+    public void ksfGenerateReplicationPayloadUsingForWith(String replicationType, String vendor, String pullType,int targets)
             throws Exception {
-        bureauOrchestrator.buildReplicationPayload(replicationType, vendor, pullType);
+        BureauEngineOrchestrator.buildBureauEngineReplicationApiPayload(replicationType, vendor, pullType,targets);
     }
 
     @When("KSF hit the Bureau Replication Api expecting {int}")
     public void ksfHitTheBureauReplicationApiExpecting(int statusCode) throws Exception {
-        bureauOrchestrator.sendReplicationRequest(statusCode);
+        BureauEngineOrchestrator.sendReplicationRequest(statusCode);
+    }
+
+    @Then("KSF validate report data consistency for {string}")
+    public void ksfValidateReportDataConsistencyFor(String vendor) throws Exception {
+        BureauEngineOrchestrator.validateReportDataConsistency(vendor);
+    }
+
+    @Then("KSF validate bureauEngine replica api {string} response for the {string} list")
+    public void ksfValidateBureauEngineReplicaApiResponseForTheList(String status, String listType) {
+        validateReplicationResponse(status, listType);
+    }
+
+    @And("KSF hit the Bureau Replication Api with same target expecting {int}")
+    public void ksfHitTheBureauReplicationApiWithSameTargetExpecting(int statusCode) throws Exception {
+        BureauEngineOrchestrator.sendReplicationRequest(statusCode);
     }
 }

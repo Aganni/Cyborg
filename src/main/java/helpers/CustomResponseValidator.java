@@ -4,7 +4,6 @@ import constants.ApiMessages;
 import constants.Constants;
 import constants.JsonKeys;
 import io.restassured.path.json.JsonPath;
-import orchestrator.BureauEngineOrchestrator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
@@ -195,5 +194,52 @@ public class CustomResponseValidator extends BaseClass {
 
         log.info("KSF: BureauEngine Error Validation Successful. Status: {}, Message: {}",
                 expectedStatus, actualMessage);
+    }
+
+    public static void validateReplicationResponse(String expectedStatus, String listToValidate) {
+        JsonPath response = session().getCurrentResponse();
+        log.info("Validating Replication Response for list: {}", listToValidate);
+
+        // 1. Basic Status Validation
+        String actualStatus = response.getString("status");
+        Assert.assertEquals(actualStatus, expectedStatus, "API Status Mismatch!");
+
+        // 2. Get Source Data from Session to verify against Response
+        String sourceAppFormId = (String) getValue("sourceAppFormId");
+        Object sourceApplicantId = getValue("sourceApplicantId");
+
+        // 3. Dynamic List Validation
+        if ("success".equalsIgnoreCase(listToValidate)) {
+            List<Map<String, Object>> successList = response.getList("success");
+            Assert.assertNotNull(successList, "Expected 'success' list but it was null");
+            Assert.assertFalse(successList.isEmpty(), "Success list is empty!");
+
+            for (Map<String, Object> item : successList) {
+                validateCommonFields(item, sourceAppFormId, sourceApplicantId);
+                log.info("Successfully validated replication for AppFormId: {}", item.get("appFormId"));
+            }
+
+        } else if ("skipped".equalsIgnoreCase(listToValidate)) {
+            List<Map<String, Object>> skippedList = response.getList("skipped");
+            Assert.assertNotNull(skippedList, "Expected 'skipped' list but it was null");
+            Assert.assertFalse(skippedList.isEmpty(), "Skipped list is empty!");
+
+            String expectedReason = "A successful bureau pull already exists for provided target and bureau details";
+
+            for (Map<String, Object> item : skippedList) {
+                validateCommonFields(item, sourceAppFormId, sourceApplicantId);
+                // Reason Validation
+                Assert.assertEquals(item.get("reason"), expectedReason, "Skipped reason mismatch!");
+                log.info("Validated SKIPPED replication for AppFormId: {} with correct reason.", item.get("appFormId"));
+            }
+        }
+    }
+
+    /**
+     * Helper method to validate common fields across success and skipped lists
+     */
+    private static void validateCommonFields(Map<String, Object> item, String expectedAppId, Object expectedApplicantId) {
+        Assert.assertNotNull(item.get("appFormId"), "appFormId is null in response");
+        Assert.assertNotNull(item.get("applicantId"), "applicantId is null in response");
     }
 }
