@@ -14,7 +14,7 @@ import java.util.Map;
 import base.BaseClass;
 
 import static constants.JsonKeys.*;
-import static helpers.DynamicDataClass.getValue;
+import static dynamicData.DynamicDataClass.getValue;
 
 public class CustomResponseValidator extends BaseClass {
 
@@ -56,7 +56,7 @@ public class CustomResponseValidator extends BaseClass {
     }
 
     private void syncWithDynamicData(JsonPath response, String jsonPath, String dataKey) {
-        Object expected = DynamicDataClass.getValue(dataKey);
+        Object expected = getValue(dataKey);
         Object actual = response.get(jsonPath);
         validateEquality("URL Param Sync: " + jsonPath, expected, actual);
     }

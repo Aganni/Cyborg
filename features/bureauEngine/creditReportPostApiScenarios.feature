@@ -127,7 +127,7 @@ Feature: Bureau Post CreditReport API Scenarios
   Scenario Outline: Verify 412 Failure for type mismatch
     Given KSF generate unique stateless identifiers for the request
     And KSF prepare bureau request for <vendor> with <pullType>
-    When KSF update mandatory integer fields with string in payload based on "BureauEngineMetadata.csv"
+    When KSF update mandatory integer fields with string in payload based on "PostCreditReportApiMetadata.csv"
     And KSF hit the BureauEngine Api with refactored payload expecting 412
     Then Validate BureauEngine error response status "Failure" and message "type mismatch"
 #    When KSF update mandatory string fields with integer in payload based on "BureauEngineMetadata.csv"

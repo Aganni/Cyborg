@@ -4,7 +4,6 @@ import base.BaseClass;
 import constants.Constants;
 
 import helpers.CustomResponseValidator;
-import helpers.DynamicDataClass;
 
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
@@ -16,8 +15,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import orchestrator.BureauEngineOrchestrator;
 
-import static dynamicData.DynamicDataClass.setValue;
 import static dynamicData.DynamicDataClass.getValue;
+import static dynamicData.DynamicDataClass.setValue;
 import static helpers.CustomResponseValidator.validateReplicationResponse;
 import static helpers.ReadDataFromJson.updateJsonWithPath;
 
@@ -64,7 +63,7 @@ public class BureauEngineStepDefiniton extends BaseClass {
 
     @And("KSF set withdrawalId as {string} for re-pull")
     public void ksfSetWithdrawalIdAsForRePull(String withdrawalId) {
-        DynamicDataClass.setValue(Constants.WITHDRAWAL_ID, withdrawalId);
+       setValue(Constants.WITHDRAWAL_ID, withdrawalId);
         log.info("Setting withdrawalId : {}", getValue(Constants.WITHDRAWAL_ID));
     }
 
