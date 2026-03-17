@@ -1,0 +1,43 @@
+[
+  {
+    "bureauPullId": "df1dc48e-26b5-4db5-9c14-ac4db9745740",
+    "appFormId": "9e92dc3d-4411-430e-87a9-33eaf82b0d73",
+    "applicantId": 655756,
+    "vendor": "ConsumerExperian",
+    "pullType": "HardPull"
+  },
+  {
+    "bureauPullId": "67c13db7-3731-4815-9736-bc72526db82b",
+    "appFormId": "9e92dc3d-4411-430e-87a9-33eaf82b0d73",
+    "applicantId": 655756,
+    "vendor": "ConsumerCibil",
+    "pullType": "HardPull"
+  },
+  {
+    "bureauPullId": "3af1cbb7-88c2-447b-89d2-0ef6e6516064",
+    "appFormId": "44c57b91-b273-4fcc-af2a-084034432639",
+    "applicantId": 657870,
+    "vendor": "ConsumerExperian",
+    "pullType": "SoftPull"
+  },
+  {
+    "bureauPullId": "d7276ccf-a66e-4f86-bc08-906b167f624f",
+    "appFormId": "bfa6070e-b6c9-4cce-8a2c-e3acaa31b119",
+    "applicantId": 657605,
+    "vendor": "ConsumerCrif",
+    "pullType": "HardPull"
+  },
+  {
+    "bureauPullId": "a16874b1-cf63-48f1-83c9-50659c7ce360",
+    "appFormId": "92ce16c2-8b13-4f23-bd37-c0d5f419e2d3",
+    "applicantId": 654848,
+    "vendor": "CommercialCibil",
+    "pullType": "HardPull"
+  },
+  {
+    "vendor": "MismatchVendor",
+    "appFormId": "NON-EXISTENT-ID",
+    "applicantId": 1234,
+    "bureauPullId": "INVALID-PULL-ID"
+  }
+]

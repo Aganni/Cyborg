@@ -13,8 +13,6 @@ import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.apache.http.HttpStatus;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.testng.Assert;
@@ -299,15 +297,14 @@ public class HelperMethods extends BaseClass {
         return jsonPath;
     }
 
-    public static JsonPath doPost(String baseUri, String requestBody, String apiEndPoints) throws Exception {
+    public static JsonPath doPost(String baseUri, String apiEndPoints, String requestBody, int statusCode)throws Exception {
         RestAssured.config = RestAssured.config().sslConfig(SSLConfig.sslConfig().with().relaxedHTTPSValidation());
         RequestSpecification apiRequest = given().spec(requestSpecifications()).baseUri(initializeEnvironment(baseUri))
                 .body(requestBody);
-        String apiResponse = apiRequest.when().post(apiEndPoints).then().statusCode(200).extract().response()
-                .asString();
+        Response response = apiRequest.when().post(apiEndPoints).then().statusCode(statusCode).extract().response();
 
-        JsonPath jsonPath = new JsonPath(apiResponse);
-        return jsonPath;
+//        JsonPath jsonPath = new JsonPath(apiResponse);
+        return response.jsonPath();
     }
 
     public static JsonPath doPostStatus(String baseUri, String requestBody, String apiEndPoints) throws Exception {

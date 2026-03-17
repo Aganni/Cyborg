@@ -16,4 +16,5 @@ public class APIEndPoints {
     public static final String BUREAU_ENGINE_BUREAUPULL = "api/v1/appForm/{appformId}/applicant/{applicantId}/creditReport";
     public static final String BUREAU_PRESIGNED_S3_LINK = "api/v1/file/{docId}";
     public static final String BUREAU_ENGINE_EXTERNAL_REPORT_UPLOAD = "api/v1/appForm/{appformId}/applicant/{applicantId}/creditReport/external";
+    public static final String BUREAU_REPLICATION_API = "/api/v1/bureau/replicate";
 }

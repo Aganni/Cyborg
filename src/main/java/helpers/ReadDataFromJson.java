@@ -84,8 +84,7 @@ public class ReadDataFromJson {
         JSONParser jsonParser = new JSONParser();
         FileReader fileReader = new FileReader(payload);
         Object obj = jsonParser.parse(fileReader);
-        JSONObject jsonObject = (JSONObject) obj;
-        return jsonObject.toString();
+        return obj.toString();
     }
 
     public static String updateJsonWithPath(String requestBody, String path, Object value) {
@@ -186,6 +185,32 @@ public class ReadDataFromJson {
             return mapper.writeValueAsString(root);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update JSON by path: " + path, e);
+        }
+    }
+
+    public static String removeJsonPath(String requestBody, String path) {
+        try {
+            JsonNode node = mapper.readTree(requestBody);
+            if (!(node instanceof ObjectNode)) {
+                return requestBody;
+            }
+
+            ObjectNode root = (ObjectNode) node;
+            String[] parts = path.split("\\.");
+            ObjectNode current = root;
+
+            for (int i = 0; i < parts.length - 1; i++) {
+                JsonNode child = current.get(parts[i]);
+                if (child == null || !child.isObject()) {
+                    return requestBody; // Path doesn't exist
+                }
+                current = (ObjectNode) child;
+            }
+
+            current.remove(parts[parts.length - 1]);
+            return mapper.writeValueAsString(root);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to remove JSON path: " + path, e);
         }
     }
 

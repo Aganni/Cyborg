@@ -1,0 +1,9 @@
+Field,Description,Mandatory,ExpectedType,TestScenario
+lpc,Three letter loan product code.,Y,String,REMOVE
+loanType,"personal, business, secured",Y,String,REMOVE
+withdrawalId,Withdrawal level id for which bureau pull is being performed,N,String,
+bureau.vendor,"ConsumerCibil, ConsumerExperian, ConsumerCrif, CommercialCibil, ConsumerEquifax",Y,String,REMOVE
+bureau.pullType,"SoftPull, HardPull, D2CFP, D2CRP, NoPull",Y,String,REMOVE
+bureau.score,score to be saved,N,Integer,
+source,Name of the caller.,Y,String,REMOVE
+responseS3Url,Presigned S3 link of the bureau file.,Y,String,REMOVE
