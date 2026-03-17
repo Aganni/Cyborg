@@ -1,4 +1,4 @@
-Feature: Bureau External API Scenarios
+Feature: Bureau Post CreditReport API Scenarios
 
   @Regression
   Scenario Outline: Verify External Bureau API for both (parse=false) and (parse=true) scenarios for all vendors

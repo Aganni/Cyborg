@@ -81,7 +81,7 @@ Feature: Bureau Post CreditReport API Scenarios
       | vendor            | pullType   | loanType   | status    | statusCode | code |
       | "ConsumerCibil"   | "HardPull" | "business" | "Success" | 200        | "50" |
       | "ConsumerCibil"   | "HardPull" | "unsecured"| "Success" | 200        | "61" |
-      | "ConsumerCibil"   | "HardPull" | "secured"  | "Success" | 200        | "61" |
+      | "ConsumerCibil"   | "HardPull" | "secured"  | "Success" | 200        | "50" |
       | "ConsumerCibil"   | "HardPull" | "consumer" | "Success" | 200        | "06" |
       | "ConsumerCibil"   | "HardPull" | "others"   | "Failure" | 412        | "50" |
 
